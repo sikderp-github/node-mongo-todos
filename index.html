@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Hi, I'm just working on node.js'</h1>
+    <form action="/addTasks" method="post">
+        <input type="text" name="name" placeholder="name">
+        <input type="text" name="location"  placeholder="location">
+        <input type="text" name="timeofTask" placeholder="Time of task">
+        <button type="submit" >Add task</button>
+
+    </form>
+<div id="tasks"></div>
+<div id="update"></div>
+    <script>
+        function loadAllTasks() {
+         // get or receive database from backend database to show in website ui
+        fetch('/todos')
+        .then(res=>res.json())
+        .then(results=>{
+            const container = document.getElementById('tasks');
+            container.innerHTML = '';
+            results.forEach(tsks=>{
+                const item = document.createElement('p');
+                item.innerHTML = `
+                <strong>${tsks.name}</strong> --${tsks.location} - ${tsks.timeofTask}
+                <button onclick="loadTask('${tsks._id}')">Update</button>
+                <button onclick="deleteTask(event, '${tsks._id}')">delete</button>
+
+                `;
+                container.appendChild(item);
+            })
+        }) 
+        };
+       loadAllTasks();   
+       
+       // to delete tasks in backend database
+       function deleteTask(event, id) {
+          // to load data from backend database
+          fetch(`/delete/${id}`,{
+           method: 'DELETE'   
+          })
+          .then(res => res.json())
+          .then(results=>{
+              if(results){
+                  event.target.parentNode.style.display = 'none';
+              }
+          })
+        };
+
+        // load a specific product to update the database
+        function loadTask(id) {
+            fetch(`/todo/${id}`)
+            .then(res=>res.json())
+            .then(data=>{
+                const update = document.getElementById('update');
+                update.innerHTML = `
+                <h3> Update: ${data._id}</h3>
+                Location: <input type="text" value="${data.location}" id="location"/><br>
+                Time: <input type="text" value="${data.timeofTask}" id="timeofTask"/><br>
+                <button onclick="updateTask('${data._id}')">submit</button
+                `;
+            })
+        };
+        // to update the database from client side
+        function updateTask(id) {
+            const location = document.getElementById('location').value;
+            const timeofTask = document.getElementById('timeofTask').value;
+            const todo ={id, location, timeofTask};
+            fetch(`/update/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(todo)
+            })
+            .then(res=>res.json())
+            .then(data=>{
+                if(data){
+                    loadAllTasks();
+                    document.getElementById('update').innerHTML = '';
+                }
+            })
+        };
+    </script>
+</body>
+</html>
